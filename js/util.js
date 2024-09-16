@@ -2,11 +2,6 @@ import { storage } from "./storage.js";
 import { bootstrap } from "./bootstrap.js";
 
 export const util = (() => {
-    var myModalEl = document.getElementById("modal-image");
-    myModalEl.addEventListener("hidden.bs.modal", function (event) {
-        document.body.style.overflowY = "scroll";
-    });
-
     const opacity = (id, speed = 0.01) => {
         const element = document.getElementById(id);
         let op = parseInt(element.style.opacity);

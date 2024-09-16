@@ -12,6 +12,8 @@ export const session = (() => {
 
     const getToken = () => session.get("token");
 
+    var myModalEl = document.getElementById("modal-image");
+
     const login = async (button) => {
         const btn = util.disableButton(button);
         const formEmail = document.getElementById("loginEmail");
@@ -80,6 +82,9 @@ export const session = (() => {
             .catch(() => {
                 progress.invalid("request");
             });
+        myModalEl.addEventListener("hidden.bs.modal", function (event) {
+            document.body.style.overflowY = "scroll";
+        });
     };
 
     return {
