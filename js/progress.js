@@ -1,34 +1,97 @@
 import { util } from "./util.js";
+import { guest } from "./guest.js";
 
 export const progress = (() => {
-    const assets = document.querySelectorAll("img");
-    const info = document.getElementById("progress-info");
+    let info = null;
     const btnEnvelope = document.getElementById("btn-envelope");
 
-    const total = assets.length;
+    let total = 0;
     let loaded = 0;
+    let valid = true;
+    let push = true;
 
-    const progress = () => {
-        loaded += 1;
+    const open = () => {
+        guest.name();
+        util.opacity("loading", 0.025);
+
+        document.body.style.overflowY = "scroll";
+        document.body.scrollIntoView({ behavior: "instant" });
+    };
+
+    const onComplete = () => {
+        guest.name();
+
+        btnEnvelope.style.display = "block";
+        info.style.display = "none";
+    };
+
+    const complete = (type) => {
+        if (!valid) {
+            return;
+        }
 
         var percentage = parseInt((loaded / total) * 100).toFixed(0);
 
-        console.log("progress: ", percentage);
-
         info.innerText = `${percentage}%`;
 
-        if (loaded == total) {
-            btnEnvelope.style.display = "block";
-            info.style.display = "none";
+        loaded += 1;
+        if (loaded === total) {
+            onComplete();
         }
     };
 
-    info.style.display = "block";
-    assets.forEach((asset) => {
-        if (asset.complete && asset.naturalWidth !== 0) {
-            progress();
-        } else {
-            asset.addEventListener("load", () => progress());
+    const add = () => {
+        if (!push) {
+            return;
         }
-    });
+
+        total += 1;
+    };
+
+    const invalid = (type) => {
+        info.innerText = `Error loading ${type} (${loaded}/${total}) [${parseInt(
+            (loaded / total) * 100
+        ).toFixed(0)}%]`;
+        valid = false;
+    };
+
+    const run = async () => {
+        document.querySelectorAll("img").forEach((asset) => {
+            asset.onerror = () => {
+                console.log(asset);
+                invalid("image");
+            };
+            asset.onload = () => {
+                complete("image");
+            };
+
+            if (
+                asset.complete &&
+                asset.naturalWidth !== 0 &&
+                asset.naturalHeight !== 0
+            ) {
+                complete("image");
+            } else if (asset.complete) {
+                invalid("image");
+            }
+        });
+    };
+
+    const init = () => {
+        document.querySelectorAll("img").forEach(add);
+
+        info = document.getElementById("progress-info");
+        info.style.display = "block";
+
+        push = false;
+        run();
+    };
+
+    return {
+        init,
+        add,
+        open,
+        invalid,
+        complete,
+    };
 })();

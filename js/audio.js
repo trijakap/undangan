@@ -1,33 +1,41 @@
 export const audio = (() => {
-    const music = document.getElementById("button-music");
+    let music = null;
     let audio = null;
 
-    const getAudio = () => {
-        if (!audio) {
-            audio = new Audio();
-            audio.src = music.getAttribute("data-url");
-            audio.load();
-            audio.currentTime = 0;
-            audio.autoplay = true;
-            audio.muted = false;
-            audio.loop = true;
-            audio.volume = 1;
-        }
+    const init = () => {
+        music = document.getElementById("button-music");
 
-        return audio;
+        audio = new Audio(music.getAttribute("data-url"));
+        audio.currentTime = 0;
+        audio.autoplay = false;
+        audio.muted = false;
+        audio.loop = true;
+        audio.volume = 1;
+        audio.controls = false;
+        audio.preload = "auto";
     };
 
-    const button = (button) => {
+    const play = async () => {
+        music.disabled = true;
+        try {
+            await audio.play();
+        } catch (err) {
+            alert(err);
+        }
+        music.disabled = false;
+    };
+
+    const button = async (button) => {
         if (button.getAttribute("data-status") !== "true") {
+            await play();
             button.setAttribute("data-status", "true");
-            getAudio().play();
             button.innerHTML =
                 '<i class="fa-solid fa-circle-pause spin-button"></i>';
             return;
         }
 
         button.setAttribute("data-status", "false");
-        getAudio().pause();
+        audio.pause();
         button.innerHTML = '<i class="fa-solid fa-circle-play"></i>';
     };
 
@@ -36,8 +44,8 @@ export const audio = (() => {
     };
 
     return {
-        play: () => getAudio().play(),
-        play: () => null,
+        init,
+        play,
         button,
         showButton,
     };

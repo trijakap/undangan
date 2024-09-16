@@ -1,7 +1,8 @@
+import { dto } from './dto.js';
 import { card } from './card.js';
 import { util } from './util.js';
-import { like } from './like.js';
 import { theme } from './theme.js';
+import { session } from './session.js';
 import { storage } from './storage.js';
 import { pagination } from './pagination.js';
 import { request, HTTP_GET, HTTP_POST, HTTP_DELETE, HTTP_PUT } from './request.js';
@@ -9,16 +10,8 @@ import { request, HTTP_GET, HTTP_POST, HTTP_DELETE, HTTP_PUT } from './request.j
 export const comment = (() => {
 
     const owns = storage('owns');
-    const session = storage('session');
+    const user = storage('user');
     const showHide = storage('comment');
-
-    if (!showHide.has('hidden')) {
-        showHide.set('hidden', []);
-    }
-
-    if (!showHide.has('show')) {
-        showHide.set('show', []);
-    }
 
     const remove = async (button) => {
         if (!confirm('Are you sure?')) {
@@ -27,22 +20,42 @@ export const comment = (() => {
 
         const id = button.getAttribute('data-uuid');
 
-        if (session.get('token')?.split('.').length === 3) {
+        if (session.isAdmin()) {
             owns.set(id, button.getAttribute('data-own'));
         }
 
+        changeButton(id, true);
         const btn = util.disableButton(button);
+        const like = document.querySelector(`[onclick="like.like(this)"][data-uuid="${id}"]`);
+        like.disabled = true;
 
-        await request(HTTP_DELETE, '/api/comment/' + owns.get(id))
-            .token(session.get('token'))
-            .then((res) => {
-                if (res.data.status) {
-                    owns.unset(id);
-                    document.getElementById(id).remove();
+        const status = await request(HTTP_DELETE, '/api/comment/' + owns.get(id))
+            .token(session.getToken())
+            .send(dto.statusResponse)
+            .then((res) => res.data.status, () => false);
+
+        if (!status) {
+            btn.restore();
+            like.disabled = false;
+            return;
+        }
+
+        document.querySelectorAll('a[onclick="comment.showOrHide(this)"]').forEach((n) => {
+            const oldUuids = n.getAttribute('data-uuids').split(',');
+
+            if (oldUuids.find((i) => i === id)) {
+                const uuids = oldUuids.filter((i) => i !== id).join(',');
+
+                if (uuids.length === 0) {
+                    n.remove();
+                } else {
+                    n.setAttribute('data-uuids', uuids);
                 }
-            });
+            }
+        });
 
-        btn.restore();
+        owns.unset(id);
+        document.getElementById(id).remove();
     };
 
     const changeButton = (id, disabled) => {
@@ -59,12 +72,27 @@ export const comment = (() => {
     const update = async (button) => {
         const id = button.getAttribute('data-uuid');
 
+        let isPresent = false;
         const presence = document.getElementById(`form-inner-presence-${id}`);
         if (presence) {
             presence.disabled = true;
+            isPresent = presence.value === "1";
         }
 
         const form = document.getElementById(`form-${id ? `inner-${id}` : 'comment'}`);
+
+        let isChecklist = false;
+        const badge = document.getElementById(`badge-${id}`);
+        if (badge) {
+            isChecklist = badge.classList.contains('text-success');
+        }
+
+        if (id && form.value === form.getAttribute('data-original') && isChecklist === isPresent) {
+            changeButton(id, false);
+            document.getElementById(`inner-${id}`).remove();
+            return;
+        }
+
         form.disabled = true;
 
         const cancel = document.querySelector(`[onclick="comment.cancel('${id}')"]`);
@@ -75,12 +103,10 @@ export const comment = (() => {
         const btn = util.disableButton(button);
 
         const status = await request(HTTP_PUT, '/api/comment/' + owns.get(id))
-            .token(session.get('token'))
-            .body({
-                presence: presence ? presence.value === "1" : null,
-                comment: form.value
-            })
-            .then((res) => res.data.status);
+            .token(session.getToken())
+            .body(dto.updateCommentRequest(presence ? isPresent : null, form.value))
+            .send(dto.statusResponse)
+            .then((res) => res.data.status, () => false);
 
         form.disabled = false;
         if (cancel) {
@@ -94,7 +120,22 @@ export const comment = (() => {
         btn.restore();
 
         if (status) {
-            comment();
+            changeButton(id, false);
+            document.getElementById(`inner-${id}`).remove();
+            document.getElementById(`content-${id}`).innerHTML = card.convertMarkdownToHTML(util.escapeHtml(form.value));
+
+            if (!presence || !badge) {
+                return;
+            }
+
+            if (isPresent) {
+                badge.classList.remove('fa-circle-xmark', 'text-danger');
+                badge.classList.add('fa-circle-check', 'text-success');
+                return;
+            }
+
+            badge.classList.remove('fa-circle-check', 'text-success');
+            badge.classList.add('fa-circle-xmark', 'text-danger');
         }
     };
 
@@ -102,9 +143,19 @@ export const comment = (() => {
         const id = button.getAttribute('data-uuid');
 
         const name = document.getElementById('form-name');
-        if (name.value.length == 0) {
+        let nameValue = name.value;
+
+        if (session.isAdmin()) {
+            nameValue = user.get('name');
+        }
+
+        if (nameValue.length == 0) {
             alert('Please fill name');
             return;
+        }
+
+        if (!id && name && !session.isAdmin()) {
+            name.disabled = true;
         }
 
         const presence = document.getElementById('form-presence');
@@ -113,7 +164,7 @@ export const comment = (() => {
             return;
         }
 
-        if (presence) {
+        if (presence && presence.value != "0") {
             presence.disabled = true;
         }
 
@@ -128,14 +179,14 @@ export const comment = (() => {
         const btn = util.disableButton(button);
 
         const response = await request(HTTP_POST, '/api/comment')
-            .token(session.get('token'))
-            .body({
-                id: id,
-                name: name.value,
-                presence: presence ? presence.value === "1" : true,
-                comment: form.value
-            })
-            .then();
+            .token(session.getToken())
+            .body(dto.postCommentRequest(id, nameValue, presence ? presence.value === "1" : true, form.value))
+            .send(dto.postCommentResponse)
+            .then((res) => res, () => null);
+
+        if (name) {
+            name.disabled = false;
+        }
 
         form.disabled = false;
         if (cancel) {
@@ -148,26 +199,79 @@ export const comment = (() => {
 
         btn.restore();
 
-        if (response?.code === 201) {
-            owns.set(response.data.uuid, response.data.own);
-            form.value = null;
-            if (presence) {
-                presence.value = "0";
-            }
-
-            if (!id) {
-                await pagination.reset();
-                document.getElementById('comments').scrollIntoView({ behavior: 'smooth' });
-            }
-
-            if (id) {
-                await comment();
-            }
+        if (!response || response.code !== 201) {
+            return;
         }
+
+        owns.set(response.data.uuid, response.data.own);
+        form.value = null;
+
+        if (presence) {
+            presence.value = "0";
+        }
+
+        if (!id) {
+            const newPage = await pagination.reset();
+            if (newPage) {
+                scroll();
+                return;
+            }
+
+            response.data.is_admin = session.isAdmin();
+            const length = document.getElementById('comments').children.length;
+            pagination.setResultData(length);
+
+            if (length == pagination.getPer()) {
+                document.getElementById('comments').lastElementChild.remove();
+            }
+
+            document.getElementById('comments').innerHTML = card.renderContent(response.data) + document.getElementById('comments').innerHTML;
+            scroll();
+        }
+
+        if (id) {
+            showHide.set('hidden', showHide.get('hidden').concat([dto.commentShowMore(response.data.uuid, true)]));
+            showHide.set('show', showHide.get('show').concat([id]));
+
+            changeButton(id, false);
+            document.getElementById(`inner-${id}`).remove();
+
+            response.data.is_admin = session.isAdmin();
+            document.getElementById(`reply-content-${id}`).insertAdjacentHTML('beforeend', card.renderInnerContent(response.data));
+
+            const containerDiv = document.getElementById(`button-${id}`);
+            const anchorTag = containerDiv.querySelector('a');
+            const uuids = [response.data.uuid];
+
+            if (anchorTag) {
+                if (anchorTag.getAttribute('data-show') === 'false') {
+                    showOrHide(anchorTag);
+                }
+
+                anchorTag.remove();
+            }
+
+            containerDiv.querySelector(`button[onclick="like.like(this)"][data-uuid="${id}"]`).insertAdjacentHTML('beforebegin', card.renderReadMore(id, anchorTag ? anchorTag.getAttribute('data-uuids').split(',').concat(uuids) : uuids));
+        }
+
     };
 
     const cancel = (id) => {
-        if (document.getElementById(`form-inner-${id}`).value.length === 0 || confirm('Are you sure?')) {
+        const form = document.getElementById(`form-inner-${id}`);
+
+        let isPresent = false;
+        const presence = document.getElementById(`form-inner-presence-${id}`);
+        if (presence) {
+            isPresent = presence.value === "1";
+        }
+
+        let isChecklist = false;
+        const badge = document.getElementById(`badge-${id}`);
+        if (badge) {
+            isChecklist = badge.classList.contains('text-success');
+        }
+
+        if (form.value.length === 0 || (form.value === form.getAttribute('data-original') && isChecklist === isPresent) || confirm('Are you sure?')) {
             changeButton(id, false);
             document.getElementById(`inner-${id}`).remove();
         }
@@ -181,19 +285,7 @@ export const comment = (() => {
         }
 
         changeButton(id, true);
-
-        const inner = document.createElement('div');
-        inner.classList.add('my-2');
-        inner.id = `inner-${id}`;
-        inner.innerHTML = `
-        <label for="form-inner-${id}" class="form-label">Reply</label>
-        <textarea class="form-control shadow-sm rounded-4 mb-2" id="form-inner-${id}" placeholder="Type reply comment"></textarea>
-        <div class="d-flex flex-wrap justify-content-end align-items-center mb-0">
-            <button style="font-size: 0.8rem;" onclick="comment.cancel('${id}')" class="btn btn-sm btn-outline-${theme.isDarkMode('light', 'dark')} rounded-4 py-0 me-1">Cancel</button>
-            <button style="font-size: 0.8rem;" onclick="comment.send(this)" data-uuid="${id}" class="btn btn-sm btn-outline-${theme.isDarkMode('light', 'dark')} rounded-4 py-0">Send</button>
-        </div>`;
-
-        document.getElementById(`button-${id}`).insertAdjacentElement('afterend', inner);
+        document.getElementById(`button-${id}`).insertAdjacentElement('afterend', card.renderReply(id));
     };
 
     const edit = async (button) => {
@@ -204,78 +296,75 @@ export const comment = (() => {
         }
 
         changeButton(id, true);
-        const tmp = button.innerText;
-        button.innerText = 'Loading..';
+        const btn = util.disableButton(button);
 
-        const status = await request(HTTP_GET, '/api/comment/' + id)
-            .token(session.get('token'))
-            .then((res) => res);
-
-        if (status?.code === 200) {
-            const inner = document.createElement('div');
-            inner.classList.add('my-2');
-            inner.id = `inner-${id}`;
-            inner.innerHTML = `
-            <label for="form-inner-${id}" class="form-label">Edit</label>
-            ${document.getElementById(id).getAttribute('data-parent') === 'true' ? `
-            <select class="form-select shadow-sm mb-2 rounded-4" id="form-inner-presence-${id}">
-                <option value="1" ${status.data.presence ? 'selected' : ''}>Datang</option>
-                <option value="2" ${status.data.presence ? '' : 'selected'}>Berhalangan</option>
-            </select>` : ''}
-            <textarea class="form-control shadow-sm rounded-4 mb-2" id="form-inner-${id}" placeholder="Type update comment"></textarea>
-            <div class="d-flex flex-wrap justify-content-end align-items-center mb-0">
-                <button style="font-size: 0.8rem;" onclick="comment.cancel('${id}')" class="btn btn-sm btn-outline-${theme.isDarkMode('light', 'dark')} rounded-4 py-0 me-1">Cancel</button>
-                <button style="font-size: 0.8rem;" onclick="comment.update(this)" data-uuid="${id}" class="btn btn-sm btn-outline-${theme.isDarkMode('light', 'dark')} rounded-4 py-0">Update</button>
-            </div>`;
-
-            document.getElementById(`button-${id}`).insertAdjacentElement('afterend', inner);
-            document.getElementById(`form-inner-${id}`).value = status.data.comment;
-        }
-
-        button.innerText = tmp;
-    };
-
-    const comment = async () => {
-        card.renderLoading();
-
-        await request(HTTP_GET, `/api/comment?per=${pagination.getPer()}&next=${pagination.getNext()}`)
-            .token(session.get('token'))
+        await request(HTTP_GET, '/api/comment/' + id)
+            .token(session.getToken())
+            .send(dto.commentResponse)
             .then((res) => {
                 if (res.code !== 200) {
                     return;
                 }
 
-                const comments = document.getElementById('comments');
+                document.getElementById(`button-${id}`).insertAdjacentElement('afterend', card.renderEdit(id, res.data.presence));
+                document.getElementById(`form-inner-${id}`).value = res.data.comment;
+                document.getElementById(`form-inner-${id}`).setAttribute('data-original', res.data.comment);
+            });
+
+        btn.restore();
+        button.disabled = true;
+    };
+
+    const comment = () => {
+        card.renderLoading();
+        const comments = document.getElementById('comments');
+        const onNullComment = `<div class="h6 text-center fw-bold p-4 my-3 bg-theme-${theme.isDarkMode('dark', 'light')} rounded-4 shadow">Yuk bagikan undangan ini biar banyak komentarnya</div>`;
+
+        if (!showHide.has('hidden')) {
+            showHide.set('hidden', []);
+        }
+
+        if (!showHide.has('show')) {
+            showHide.set('show', []);
+        }
+
+        return request(HTTP_GET, `/api/comment?per=${pagination.getPer()}&next=${pagination.getNext()}`)
+            .token(session.getToken())
+            .send()
+            .then((res) => {
                 pagination.setResultData(res.data.length);
 
                 if (res.data.length === 0) {
-                    comments.innerHTML = `<div class="h6 text-center fw-bold p-4 my-3 bg-theme-${theme.isDarkMode('dark', 'light')} rounded-4 shadow">Yuk bagikan undangan ini biar banyak komentarnya</div>`;
-                    return;
+                    comments.innerHTML = onNullComment;
+                    return res;
                 }
 
-                const uuids = util.extractUUIDs(res.data);
-                showHide.set('hidden', (() => {
-                    let arrHidden = showHide.get('hidden');
-                    uuids.forEach((c) => {
-                        if (!arrHidden.find((item) => item.uuid === c)) {
-                            arrHidden.push({
-                                uuid: c,
-                                show: false,
-                            });
+                const traverse = (items, hide) => {
+                    items.forEach((item) => {
+                        if (!hide.find((i) => i.uuid === item.uuid)) {
+                            hide.push(dto.commentShowMore(item.uuid));
+                        }
+
+                        if (item.comments && item.comments.length > 0) {
+                            traverse(item.comments, hide);
                         }
                     });
 
-                    return arrHidden;
-                })());
+                    return hide;
+                };
 
-                comments.innerHTML = res.data.map((comment) => card.renderContent(comment)).join('');
+                showHide.set('hidden', traverse(res.data, showHide.get('hidden')));
+                return res;
+            })
+            .then((res) => {
+                if (res.data.length === 0) {
+                    return res;
+                }
 
-                uuids.forEach((c) => {
-                    like.setTapTap(c);
-                });
-                res.data.forEach((c) => {
-                    card.fetchTracker(c);
-                });
+                comments.setAttribute('data-loading', 'false');
+                comments.innerHTML = res.data.map((c) => card.renderContent(c)).join('');
+                res.data.forEach(card.fetchTracker);
+                return res;
             });
     };
 
@@ -286,20 +375,21 @@ export const comment = (() => {
 
         if (show) {
             button.setAttribute('data-show', 'false');
-            button.innerText = 'Show replies' + ' (' + ids.length + ')';
+            button.innerText = 'Show replies';
+            button.innerText += ' (' + ids.length + ')';
 
             showHide.set('show', showHide.get('show').filter((item) => item !== uuid));
         } else {
             button.setAttribute('data-show', 'true');
             button.innerText = 'Hide replies';
 
-            showHide.set('show', [...showHide.get('show'), uuid]);
+            showHide.set('show', showHide.get('show').concat([uuid]));
         }
 
         for (const id of ids) {
             showHide.set('hidden', showHide.get('hidden').map((item) => {
                 if (item.uuid === id) {
-                    return { uuid: id, show: !show };
+                    item.show = !show;
                 }
 
                 return item;
@@ -313,7 +403,10 @@ export const comment = (() => {
         }
     };
 
+    const scroll = () => document.getElementById('comments').scrollIntoView({ behavior: 'smooth' });
+
     return {
+        scroll,
         cancel,
         send,
         edit,

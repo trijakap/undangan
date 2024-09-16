@@ -1,34 +1,19 @@
+import { dto } from "./dto.js";
 import { util } from "./util.js";
-import { user } from "./user.js";
-import { theme } from "./theme.js";
+import { admin } from "./admin.js";
 import { storage } from "./storage.js";
 import { comment } from "./comment.js";
+import { progress } from "./progress.js";
 import { bootstrap } from "./bootstrap.js";
-import { request, HTTP_POST } from "./request.js";
+import { request, HTTP_POST, HTTP_GET } from "./request.js";
 
 export const session = (() => {
     const session = storage("session");
 
-    theme.check();
-
-    if (
-        session.get("token")?.split(".").length !== 3 ||
-        JSON.parse(atob(session.get("token").split(".")[1])).exp <
-            new Date().getTime() / 1000
-    ) {
-        comment.renderLoading();
-        new bootstrap.Modal("#loginModal").show();
-    } else {
-        user.getUserDetail();
-        user.getStatUser();
-        comment.comment();
-    }
+    const getToken = () => session.get("token");
 
     const login = async (button) => {
-        const btn = util.disableButton(
-            button,
-            '<div class="spinner-border spinner-border-sm me-1" role="status"></div>Loading..'
-        );
+        const btn = util.disableButton(button);
         const formEmail = document.getElementById("loginEmail");
         const formPassword = document.getElementById("loginPassword");
 
@@ -36,22 +21,24 @@ export const session = (() => {
         formPassword.disabled = true;
 
         const res = await request(HTTP_POST, "/api/session")
-            .body({
-                email: formEmail.value,
-                password: formPassword.value,
-            })
+            .body(dto.postSessionRequest(formEmail.value, formPassword.value))
+            .send(dto.tokenResponse)
             .then((res) => {
                 if (res.code === 200) {
                     session.set("token", res.data.token);
                 }
 
-                return res.code === 200;
-            });
+                return res;
+            })
+            .then(
+                (res) => res.code === 200,
+                () => false
+            );
 
         if (res) {
             bootstrap.Modal.getOrCreateInstance("#loginModal").hide();
-            user.getUserDetail();
-            user.getStatUser();
+            admin.getUserDetail();
+            admin.getStatUser();
             comment.comment();
         }
 
@@ -69,8 +56,37 @@ export const session = (() => {
         new bootstrap.Modal("#loginModal").show();
     };
 
+    const isAdmin = () => {
+        return (getToken() ?? ".").split(".").length === 3;
+    };
+
+    const guest = () => {
+        progress.add();
+        request(HTTP_GET, "/api/config")
+            .token(document.body.getAttribute("data-key"))
+            .send()
+            .then(async (res) => {
+                session.set("token", document.body.getAttribute("data-key"));
+
+                const config = storage("config");
+                for (let [key, value] of Object.entries(res.data)) {
+                    config.set(key, value);
+                }
+
+                await comment.comment();
+
+                progress.complete("request");
+            })
+            .catch(() => {
+                progress.invalid("request");
+            });
+    };
+
     return {
+        guest,
         login,
         logout,
+        isAdmin,
+        getToken,
     };
 })();

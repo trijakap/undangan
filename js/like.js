@@ -1,11 +1,12 @@
+import { dto } from './dto.js';
 import { storage } from './storage.js';
+import { session } from './session.js';
 import { confetti } from './confetti.js';
 import { request, HTTP_PATCH, HTTP_POST } from './request.js';
 
 export const like = (() => {
 
     const likes = storage('likes');
-    const session = storage('session');
 
     const like = async (button) => {
         const id = button.getAttribute('data-uuid');
@@ -17,7 +18,8 @@ export const like = (() => {
 
         if (likes.has(id)) {
             await request(HTTP_PATCH, '/api/comment/' + likes.get(id))
-                .token(session.get('token'))
+                .token(session.getToken())
+                .send(dto.statusResponse)
                 .then((res) => {
                     if (res.data.status) {
                         likes.unset(id);
@@ -36,7 +38,8 @@ export const like = (() => {
         }
 
         await request(HTTP_POST, '/api/comment/' + id)
-            .token(session.get('token'))
+            .token(session.getToken())
+            .send(dto.uuidResponse)
             .then((res) => {
                 if (res.code == 201) {
                     likes.set(id, res.data.uuid);
@@ -56,7 +59,7 @@ export const like = (() => {
         if (!confetti) {
             return;
         }
-        
+
         const end = Date.now() + 25;
         const colors = ['#ff69b4', '#ff1493'];
 
@@ -96,29 +99,23 @@ export const like = (() => {
         }());
     };
 
-    const setTapTap = (uuid) => {
-        const id = document.getElementById(`body-content-${uuid}`);
+    const tapTap = async (div) => {
+        const currentTime = (new Date()).getTime();
+        const tapLength = currentTime - parseInt(div.getAttribute('data-tapTime'));
+        const uuid = div.id.replace('body-content-', '');
 
-        const action = async () => {
-            const currentTime = (new Date()).getTime();
-            const tapLength = currentTime - parseInt(id.getAttribute('data-tapTime'));
+        if (tapLength < 300 && tapLength > 0 && !likes.has(uuid) && div.getAttribute('data-liked') !== 'true') {
+            animation(div);
+            div.setAttribute('data-liked', 'true');
+            await like(document.querySelector(`[onclick="like.like(this)"][data-uuid="${uuid}"]`));
+            div.setAttribute('data-liked', 'false');
+        }
 
-            if (tapLength < 300 && tapLength > 0 && !likes.has(uuid) && id.getAttribute('data-liked') !== 'true') {
-                animation(id);
-                id.setAttribute('data-liked', 'true');
-                await like(document.querySelector(`[onclick="like.like(this)"][data-uuid="${uuid}"]`));
-                id.setAttribute('data-liked', 'false');
-            }
-
-            id.setAttribute('data-tapTime', currentTime);
-        };
-
-        id.removeEventListener('touchend', action);
-        id.addEventListener('touchend', action);
+        div.setAttribute('data-tapTime', currentTime);
     };
 
     return {
         like,
-        setTapTap,
+        tapTap,
     };
 })();

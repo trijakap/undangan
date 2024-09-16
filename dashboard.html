@@ -20,7 +20,6 @@
         <link
             rel="apple-touch-icon"
             sizes="192x192"
-            type="image/png"
             href="https://ulems.my.id/assets/images/icon-192x192.png"
         />
         <link
@@ -29,7 +28,7 @@
             href="https://ulems.my.id/favicon.ico"
         />
 
-        <!-- Dependencies -->
+        <!-- Preconnect CDN -->
         <link
             rel="dns-prefetch"
             href="https://cdn.jsdelivr.net"
@@ -52,6 +51,8 @@
             crossorigin="anonymous"
         />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+        <!-- Preload Resources -->
         <link
             rel="preload"
             href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.css"
@@ -80,6 +81,14 @@
             crossorigin="anonymous"
             as="script"
         />
+
+        <!-- Font -->
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Josefin+Sans&display=swap"
+        />
+
+        <!-- Dependencies CSS -->
         <link
             rel="stylesheet"
             href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.css"
@@ -98,14 +107,7 @@
             integrity="sha256-wiz7ZSCn/btzhjKDQBms9Hx4sSeUYsDrTLg7roPstac="
             crossorigin="anonymous"
         />
-        <link
-            rel="stylesheet"
-            href="https://fonts.googleapis.com/css2?family=Josefin+Sans&display=swap"
-        />
-
-        <!-- App -->
         <link rel="stylesheet" href="./css/dashboard.css" />
-        <script src="./js/dashboard.js" type="module" defer></script>
     </head>
 
     <body data-url="https://backend-undangan-aplx.vercel.app/">
@@ -241,7 +243,7 @@
                                     </p>
                                     <button
                                         class="btn btn-success rounded-3 btn-sm m-0 pb-0"
-                                        onclick="user.download(this)"
+                                        onclick="admin.download(this)"
                                     >
                                         <i class="fa-solid fa-download"></i>
                                         <span class="d-none d-sm-inline ms-1"
@@ -471,7 +473,11 @@
                             </div>
 
                             <!-- Comments -->
-                            <div class="my-3 pt-3" id="comments"></div>
+                            <div
+                                class="my-3 pt-3"
+                                id="comments"
+                                data-loading="false"
+                            ></div>
 
                             <!-- Pagination -->
                             <nav
@@ -558,7 +564,7 @@
                                             class="form-control form-control-sm rounded-4"
                                             id="form-name"
                                             name="form-name"
-                                            oninput="user.enableButtonName()"
+                                            oninput="admin.enableButtonName()"
                                         />
                                     </div>
                                 </form>
@@ -568,7 +574,7 @@
                                         type="button"
                                         class="btn btn-sm btn-primary rounded-4"
                                         id="button-change-name"
-                                        onclick="user.changeName(this)"
+                                        onclick="admin.changeName(this)"
                                         disabled
                                     >
                                         Change
@@ -597,7 +603,9 @@
                                     <button
                                         class="btn btn-sm btn-outline-secondary rounded-end-4"
                                         type="button"
-                                        onclick="user.copyAccessKey(this)"
+                                        data-copy=""
+                                        onclick="util.copy(this)"
+                                        id="button-copy-accesskey"
                                     >
                                         <i class="fa-solid fa-copy"></i>
                                     </button>
@@ -607,7 +615,7 @@
                                     <button
                                         type="button"
                                         class="btn btn-sm btn-primary rounded-4"
-                                        onclick="user.regenerate(this)"
+                                        onclick="admin.regenerate(this)"
                                     >
                                         Regenerate
                                     </button>
@@ -643,7 +651,7 @@
                                         type="checkbox"
                                         role="button"
                                         id="filterBadWord"
-                                        onchange="user.changeFilterBadWord(this)"
+                                        onchange="admin.changeFilterBadWord(this)"
                                     />
                                     <label
                                         class="form-check-label"
@@ -657,7 +665,7 @@
                                         type="checkbox"
                                         role="button"
                                         id="replyComment"
-                                        onchange="user.replyComment(this)"
+                                        onchange="admin.replyComment(this)"
                                     />
                                     <label
                                         class="form-check-label"
@@ -671,7 +679,7 @@
                                         type="checkbox"
                                         role="button"
                                         id="editComment"
-                                        onchange="user.editComment(this)"
+                                        onchange="admin.editComment(this)"
                                     />
                                     <label
                                         class="form-check-label"
@@ -685,7 +693,7 @@
                                         type="checkbox"
                                         role="button"
                                         id="deleteComment"
-                                        onchange="user.deleteComment(this)"
+                                        onchange="admin.deleteComment(this)"
                                     />
                                     <label
                                         class="form-check-label"
@@ -727,7 +735,7 @@
                                             class="form-control form-control-sm rounded-4"
                                             id="new_password"
                                             name="new_password"
-                                            oninput="user.enableButtonPassword()"
+                                            oninput="admin.enableButtonPassword()"
                                             placeholder="New Password"
                                             autocomplete="new-password"
                                         />
@@ -739,7 +747,7 @@
                                         type="button"
                                         class="btn btn-sm btn-primary rounded-4"
                                         id="button-change-password"
-                                        onclick="user.changePassword(this)"
+                                        onclick="admin.changePassword(this)"
                                         disabled
                                     >
                                         Change
@@ -860,5 +868,6 @@
             integrity="sha256-CDOy6cOibCWEdsRiZuaHf8dSGGJRYuBGC+mjoJimHGw="
             crossorigin="anonymous"
         ></script>
+        <script src="./js/dashboard.js" type="module"></script>
     </body>
 </html>

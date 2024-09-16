@@ -2,89 +2,108 @@ import { comment } from './comment.js';
 
 export const pagination = (() => {
 
-    const perPage = 10;
+    let perPage = 10;
     let pageNow = 0;
     let resultData = 0;
 
-    const page = document.getElementById('page');
-    const buttonPrev = document.getElementById('previous');
-    const buttonNext = document.getElementById('next');
+    let page = null;
+    let liPrev = null;
+    let liNext = null;
 
-    const disabledPrevious = () => {
-        buttonPrev.classList.add('disabled');
+    const setPer = (num) => {
+        perPage = Number(num);
     };
 
-    const disabledNext = () => {
-        buttonNext.classList.add('disabled');
-    };
+    const getPer = () => perPage;
+
+    const getNext = () => pageNow;
+
+    const disabledPrevious = () => !liPrev.classList.contains('disabled') ? liPrev.classList.add('disabled') : null;
+
+    const enablePrevious = () => liPrev.classList.contains('disabled') ? liPrev.classList.remove('disabled') : null;
+
+    const disabledNext = () => !liNext.classList.contains('disabled') ? liNext.classList.add('disabled') : null;
+
+    const enableNext = () => liNext.classList.contains('disabled') ? liNext.classList.remove('disabled') : null;
 
     const buttonAction = async (button, type) => {
-        let tmp = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = `${type == 'Next' ? type : ''}<span class="spinner-border spinner-border-sm mx-1"></span>${type == 'Previous' ? type : ''}`;
+        const tmp = button.innerHTML;
 
+        button.innerHTML = `${type == 'Next' ? type : ''}<div class="spinner-border spinner-border-sm my-0 mx-1 p-0" style="height: 0.8rem; width: 0.8rem;"></div>${type == 'Prev' ? type : ''}`;
         await comment.comment();
-        document.getElementById('comments').scrollIntoView({ behavior: 'smooth' });
 
         button.disabled = false;
         button.innerHTML = tmp;
-    };
 
-    const getPer = () => {
-        return perPage;
-    };
-
-    const getNext = () => {
-        return pageNow;
+        comment.scroll();
     };
 
     const reset = async () => {
+        if (pageNow == 0) {
+            return false;
+        }
+
         pageNow = 0;
         resultData = 0;
         page.innerText = 1;
-        buttonNext.classList.remove('disabled');
-        await comment.comment();
+
+        disabledNext();
         disabledPrevious();
+        await comment.comment();
+
+        return true;
     };
 
     const setResultData = (len) => {
         resultData = len;
         if (resultData < perPage) {
             disabledNext();
+            return;
         }
+
+        enableNext();
     };
 
     const previous = async (button) => {
-        if (pageNow < 0) {
-            disabledPrevious();
-        } else {
+        disabledPrevious();
+
+        if (pageNow >= 0) {
             pageNow -= perPage;
+
             disabledNext();
-
-            await buttonAction(button, 'Previous');
+            await buttonAction(button, 'Prev');
             page.innerText = parseInt(page.innerText) - 1;
-            buttonNext.classList.remove('disabled');
 
-            if (pageNow <= 0) {
-                disabledPrevious();
+            if (pageNow > 0) {
+                enablePrevious();
             }
         }
     };
 
     const next = async (button) => {
-        if (resultData < perPage) {
-            disabledNext();
-        } else {
-            pageNow += perPage;
-            disabledPrevious();
+        disabledNext();
 
+        if (resultData >= perPage) {
+            pageNow += perPage;
+
+            disabledPrevious();
             await buttonAction(button, 'Next');
             page.innerText = parseInt(page.innerText) + 1;
-            buttonPrev.classList.remove('disabled');
+
+            enablePrevious();
         }
     };
 
+    const init = () => {
+        page = document.getElementById('page');
+        liPrev = document.getElementById('previous');
+        liNext = document.getElementById('next');
+    };
+
     return {
+        init,
+        setPer,
         getPer,
         getNext,
         reset,
