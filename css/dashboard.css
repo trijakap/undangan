@@ -19,7 +19,18 @@
     background-color: #a8bbbf;
 }
 
-@media screen and (width <=767px) {
+html {
+    scroll-behavior: smooth !important;
+    width: 100vw;
+}
+
+body {
+    font-family: "Josefin Sans", sans-serif !important;
+    padding: 0 !important;
+    overflow-x: hidden;
+}
+
+@media screen and (width <= 767px) {
     html {
         scrollbar-width: none !important;
         width: 100%;
@@ -57,4 +68,16 @@
 .logout:hover {
     color: var(--bs-light) !important;
     background-color: var(--bs-danger) !important;
+}
+
+.bg-theme-light {
+    background-color: var(--bs-gray-100);
+}
+
+.bg-theme-dark {
+    background-color: var(--bs-gray-800);
+}
+
+.card-body {
+    overflow-wrap: break-word !important;
 }

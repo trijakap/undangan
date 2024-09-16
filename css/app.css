@@ -4,18 +4,90 @@
 * {
     scrollbar-width: none;
     -ms-overflow-style: none;
+    color: #d3895b;
+    font-family: "Open Sans", system-ui;
 }
 
 *::-webkit-scrollbar {
     display: none;
 }
 
-.font-esthetic {
-    font-family: Sacramento, cursive !important;
+html {
+    scroll-behavior: smooth !important;
 }
 
-.font-arabic {
-    font-family: 'Noto Naskh Arabic', serif !important;
+body {
+    font-family: "Open Sans", system-ui !important;
+    padding: 0 !important;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.bg-main {
+    background-color: #fff5ec;
+}
+
+.font-mistrully {
+    font-family: "mistrully";
+}
+
+.font-serif-regular {
+    font-family: "Gentium Book Plus", system-ui;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.font-serif-bold {
+    font-family: "Gentium Book Plus", system-ui;
+    font-weight: 600;
+    font-style: normal;
+}
+
+.font-body-regular {
+    font-family: "Open Sans", system-ui;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    font-variation-settings: "wdth" 100;
+}
+
+.font-body-semi-bold {
+    font-family: "Open Sans", system-ui;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    font-variation-settings: "wdth" 100;
+}
+
+h2 {
+    font-size: 28pt;
+    font-family: "Gentium Book Plus", system-ui;
+    font-weight: 700;
+    font-style: normal;
+}
+
+.caption-regular {
+    font-family: "Open Sans", system-ui;
+    font-optical-sizing: auto;
+    font-variation-settings: "wdth" 100;
+    font-size: 16px;
+}
+
+.caption-bold {
+    font-family: "Open Sans", system-ui;
+    font-optical-sizing: auto;
+    font-variation-settings: "wdth" 100;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.line {
+    border-top: 1px solid #d3895b;
+    opacity: 1 !important;
 }
 
 .img-crop {
@@ -26,11 +98,21 @@
     border-radius: 50%;
 }
 
-.img-crop>img {
+.wedding-gift-card {
+    border: 1px solid #d3895b;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.img-crop > img {
     display: inline;
     margin: 0 auto;
     height: auto;
     width: 100%;
+}
+
+.btn {
+    border-radius: 40px;
 }
 
 .btn-music {
@@ -47,6 +129,39 @@
     z-index: 1055 !important;
 }
 
+.btn-outlined-light {
+    border-color: #d3895b;
+    color: #d3895b;
+}
+
+.btn-primary {
+    background-color: #d3895b;
+    color: #fff5ec;
+    border: none;
+    border-radius: 40px;
+}
+
+.btn-sm {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 16px 4px 16px;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary.active,
+.open > .dropdown-toggle.btn-primary {
+    background-color: #d3895b;
+    color: #fff5ec;
+    border: none;
+}
+
+div.rounded-pill {
+    background-color: #d3895b;
+    border-color: #d3895b !important;
+}
+
 .loading-page {
     position: fixed;
     inset: 0 !important;
@@ -55,12 +170,82 @@
     z-index: 1056 !important;
 }
 
+.card-body {
+    overflow-wrap: break-word !important;
+}
+
+.title {
+    position: absolute;
+    text-align: center;
+    z-index: 3;
+    text-shadow: 0px 0px 7px #ffffff;
+    color: #ffffff;
+    transform: translateY(-70%);
+    top: 40%;
+}
+
+.form {
+    padding: 12px !important;
+}
+
 .mouse-animation {
     padding: 0.25rem 0.625rem;
     height: 2rem;
     border-radius: 1.4rem;
     opacity: 0.75;
     box-sizing: content-box;
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateY(1rem);
+        opacity: 0;
+    }
+
+    10% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(0);
+        opacity: 0;
+    }
+}
+
+.mouse-animation > .scroll-animation {
+    width: 0.25rem;
+    height: 0.625rem;
+    border-radius: 25%;
+    background-color: #808080;
+    animation-name: scroll;
+    animation-duration: 2.5s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+@keyframes spin-icon {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spin-button {
+    animation: spin-icon 5s linear infinite;
+}
+
+@keyframes love {
+    50% {
+        transform: translateY(1rem);
+    }
+}
+
+.animate-love {
+    animation: love 5s ease-in-out infinite;
 }
 
 .dark-section {
@@ -81,14 +266,80 @@ footer {
     color: black;
 }
 
-.bg-cover-home {
+.bg-cover-white {
+    background: red;
+}
+
+.mandatory-scroll-snapping {
+    scroll-snap-type: y mandatory;
+}
+
+main {
+    background-color: #fff5ec;
+}
+
+.section {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.home-image-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.home-image {
+    height: 95vh;
+    z-index: 2;
+}
+
+.decoration-front {
+    z-index: 3; /* Place decoration in front of the image */
+}
+
+.decoration-back {
+    z-index: 1; /* Place decoration behind the image */
+}
+
+.decoration {
+    /* ... (existing properties) ... */
+    /* Adjust position and size as needed */
     position: absolute;
-    opacity: 0.2;
-    left: 50%;
     top: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
-    height: 100%;
-    width: 100vw;
-    object-fit: cover;
-    mask-image: linear-gradient(to bottom, black, black, black, black, black, transparent);
+    animation: float 20s infinite ease-in-out;
+}
+
+.decoration img {
+    /* Adjust size and position for individual images */
+    width: 50px;
+    height: 50px;
+}
+/* ... and so on for other shapes ... */
+
+@keyframes float {
+    0% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+@font-face {
+    font-family: "mistrully";
+    src: url("/assets/font/mistrully.ttf") format("truetype");
+}
+
+.divider {
+    height: 120px;
 }

@@ -1,19 +1,28 @@
-import { util } from './util.js';
-import { guest } from './guest.js';
+import { util } from "./util.js";
+import { guest } from "./guest.js";
 
 export const progress = (() => {
-
     let info = null;
-    let bar = null;
+    const btnEnvelope = document.getElementById("btn-envelope");
 
     let total = 0;
     let loaded = 0;
     let valid = true;
     let push = true;
 
+    const open = () => {
+        guest.name();
+        util.opacity("loading", 0.025);
+
+        document.body.style.overflowY = "scroll";
+        document.body.scrollIntoView({ behavior: "instant" });
+    };
+
     const onComplete = () => {
         guest.name();
-        util.opacity('loading', 0.025);
+
+        btnEnvelope.style.display = "block";
+        info.style.display = "none";
     };
 
     const complete = (type) => {
@@ -21,10 +30,11 @@ export const progress = (() => {
             return;
         }
 
-        loaded += 1;
-        bar.style.width = Math.min((loaded / total) * 100, 100).toString() + "%";
-        info.innerText = `Loading ${type} complete (${loaded}/${total}) [${parseInt((loaded / total) * 100).toFixed(0)}%]`;
+        var percentage = parseInt((loaded / total) * 100).toFixed(0);
 
+        info.innerText = `${percentage}%`;
+
+        loaded += 1;
         if (loaded === total) {
             onComplete();
         }
@@ -39,34 +49,39 @@ export const progress = (() => {
     };
 
     const invalid = (type) => {
-        info.innerText = `Error loading ${type} (${loaded}/${total}) [${parseInt((loaded / total) * 100).toFixed(0)}%]`;
-        bar.style.backgroundColor = 'red';
+        info.innerText = `Error loading ${type} (${loaded}/${total}) [${parseInt(
+            (loaded / total) * 100
+        ).toFixed(0)}%]`;
         valid = false;
     };
 
     const run = async () => {
-        document.querySelectorAll('img').forEach((asset) => {
+        document.querySelectorAll("img").forEach((asset) => {
             asset.onerror = () => {
-                invalid('image');
+                console.log(asset);
+                invalid("image");
             };
             asset.onload = () => {
-                complete('image');
+                complete("image");
             };
 
-            if (asset.complete && asset.naturalWidth !== 0 && asset.naturalHeight !== 0) {
-                complete('image');
+            if (
+                asset.complete &&
+                asset.naturalWidth !== 0 &&
+                asset.naturalHeight !== 0
+            ) {
+                complete("image");
             } else if (asset.complete) {
-                invalid('image');
+                invalid("image");
             }
         });
     };
 
     const init = () => {
-        document.querySelectorAll('img').forEach(add);
+        document.querySelectorAll("img").forEach(add);
 
-        info = document.getElementById('progress-info');
-        bar = document.getElementById('progress-bar');
-        info.style.display = 'block';
+        info = document.getElementById("progress-info");
+        info.style.display = "block";
 
         push = false;
         run();
@@ -75,6 +90,7 @@ export const progress = (() => {
     return {
         init,
         add,
+        open,
         invalid,
         complete,
     };

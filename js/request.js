@@ -1,24 +1,25 @@
-import { dto } from './dto.js';
-import { session } from './session.js';
+import { dto } from "./dto.js";
+import { session } from "./session.js";
 
-export const HTTP_GET = 'GET';
-export const HTTP_POST = 'POST';
-export const HTTP_PUT = 'PUT';
-export const HTTP_PATCH = 'PATCH';
-export const HTTP_DELETE = 'DELETE';
+export const HTTP_GET = "GET";
+export const HTTP_POST = "POST";
+export const HTTP_PUT = "PUT";
+export const HTTP_PATCH = "PATCH";
+export const HTTP_DELETE = "DELETE";
 
 export const request = (method, path) => {
-
-    let url = document.body.getAttribute('data-url');
+    let url = document.body.getAttribute("data-url");
     let req = {
         method: method,
         headers: new Headers({
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        })
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        }),
     };
 
-    if (url.slice(-1) == '/') {
+    console.log(url);
+
+    if (url.slice(-1) == "/") {
         url = url.slice(0, -1);
     }
 
@@ -54,12 +55,15 @@ export const request = (method, path) => {
                         return null;
                     }
 
-                    const existingLink = document.querySelector('a[download]');
+                    const existingLink = document.querySelector("a[download]");
                     if (existingLink) {
                         document.body.removeChild(existingLink);
                     }
 
-                    const filename = res.headers.get('content-disposition')?.match(/filename="(.+)"/)?.[1] || 'download.csv';
+                    const filename =
+                        res.headers
+                            .get("content-disposition")
+                            ?.match(/filename="(.+)"/)?.[1] || "download.csv";
                     return res.blob().then((blob) => ({ blob, filename }));
                 })
                 .then((res) => {
@@ -69,7 +73,7 @@ export const request = (method, path) => {
 
                     const { blob, filename } = res;
 
-                    const link = document.createElement('a');
+                    const link = document.createElement("a");
                     const href = window.URL.createObjectURL(blob);
 
                     link.href = href;
@@ -80,7 +84,6 @@ export const request = (method, path) => {
 
                     document.body.removeChild(link);
                     window.URL.revokeObjectURL(href);
-
                 })
                 .catch((err) => {
                     alert(err);
@@ -89,11 +92,11 @@ export const request = (method, path) => {
         },
         token(token) {
             if (session.isAdmin()) {
-                req.headers.append('Authorization', 'Bearer ' + token);
+                req.headers.append("Authorization", "Bearer " + token);
                 return this;
             }
 
-            req.headers.append('x-access-key', token);
+            req.headers.append("x-access-key", token);
             return this;
         },
         body(body) {
