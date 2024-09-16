@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
     guest.init();
     progress.init();
     window.AOS.init();
+    guest.name();
 
     window.util = util;
     window.like = like;
