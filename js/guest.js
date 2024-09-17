@@ -93,7 +93,7 @@ export const guest = (() => {
         }
     };
 
-    const open = (button) => {
+    const open = async (button) => {
         button.disabled = true;
         confetti({
             origin: { y: 1 },
@@ -109,6 +109,14 @@ export const guest = (() => {
 
         // theme.showButtonChangeTheme();
         setTimeout(animation, 1500);
+
+        const token = document.querySelector("body").getAttribute("data-key");
+        if (!token || token.length === 0) {
+            return;
+        }
+
+        animation();
+        await comment.comment();
     };
 
     const init = () => {

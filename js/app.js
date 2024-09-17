@@ -12,8 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
     theme.check();
     pagination.init();
 
-    guest.init();
     progress.init();
+    guest.init();
     window.AOS.init();
     guest.name();
 

@@ -75,7 +75,7 @@ export const session = (() => {
                     config.set(key, value);
                 }
 
-                await comment.comment();
+                // await comment.comment();
 
                 progress.complete("request");
             })
