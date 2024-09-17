@@ -58,7 +58,6 @@ export const progress = (() => {
     const run = async () => {
         document.querySelectorAll("img").forEach((asset) => {
             asset.onerror = () => {
-                console.log(asset);
                 invalid("image");
             };
             asset.onload = () => {

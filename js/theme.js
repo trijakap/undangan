@@ -102,6 +102,7 @@ export const theme = (() => {
     };
 
     const isDarkMode = (onDark = null, onLight = null) => {
+        return false;
         const status = theme.get("active") === THEME_DARK;
 
         if (onDark && onLight) {

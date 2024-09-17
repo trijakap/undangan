@@ -17,8 +17,6 @@ export const request = (method, path) => {
         }),
     };
 
-    console.log(url);
-
     if (url.slice(-1) == "/") {
         url = url.slice(0, -1);
     }

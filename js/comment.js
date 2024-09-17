@@ -162,14 +162,14 @@ export const comment = (() => {
                 return;
             }
 
-            if (isPresent) {
-                badge.classList.remove("fa-circle-xmark", "text-danger");
-                badge.classList.add("fa-circle-check", "text-success");
-                return;
-            }
+            // if (isPresent) {
+            //     badge.classList.remove("fa-circle-xmark", "text-danger");
+            //     badge.classList.add("fa-circle-check", "text-success");
+            //     return;
+            // }
 
-            badge.classList.remove("fa-circle-check", "text-success");
-            badge.classList.add("fa-circle-xmark", "text-danger");
+            // badge.classList.remove("fa-circle-check", "text-success");
+            // badge.classList.add("fa-circle-xmark", "text-danger");
         }
     };
 
