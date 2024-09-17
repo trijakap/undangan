@@ -328,6 +328,7 @@ export const comment = (() => {
                     )
                 );
         }
+        name.disabled = true;
     };
 
     const cancel = (id) => {
