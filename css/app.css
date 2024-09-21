@@ -62,6 +62,10 @@ body {
     font-variation-settings: "wdth" 100;
 }
 
+.text-small {
+    font-size: 12px;
+}
+
 h2 {
     font-size: 28pt;
     font-family: "Gentium Book Plus", system-ui;
